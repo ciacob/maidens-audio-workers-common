@@ -43,7 +43,7 @@ public class AudioGraphics {
      * UIComponent. The waveform is fitted horizontally and trimmed vertically.
      *
      * @param   samples
-     *          ByteArray with samples describing the waveform to be drawn (mono signal expected).
+     *          ByteArray with samples describing the waveform to be drawn (iterleaved signal expected).
      *
      * @param   canvas
      *          Sprite (or subclass) instance to draw inside. Its width and height will limit the waveform being drawn.
@@ -133,7 +133,7 @@ public class AudioGraphics {
 
     /**
      * Draws a rendition of the waveform described by given "samples" inside the provided "canvas"
-     * UIComponent. The waveform is fitted horizontally and trimmed vertically. Less accurate than drawWaveForm, but
+     * UIComponent. The waveform is fitted horizontally and trimmed vertically. Less accurate than `drawWaveForm`, but
      * about 100 times faster.
      *
      * @param   samples

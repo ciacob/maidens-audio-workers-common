@@ -1,4 +1,6 @@
 package eu.claudius.iacob.synth.utils {
+import eu.claudius.iacob.synth.constants.WorkersCommon;
+
 import flash.events.Event;
 import flash.system.MessageChannel;
 import flash.system.Worker;
@@ -43,14 +45,18 @@ public class AudioParallelRenderer {
     private var _renderedAudioStorage:ByteArray;
     private var _onDoneCallback:Function;
     private var _onErrorCallback:Function;
+    private var _uid : String;
 
     /**
-     *
+     * End-point to instantiate an audio background worker and operate it (e.g., assign work to it, order it
+     * to start or stop working, collect produced output or decommission it, when no longer needed).
+     * @constructor
      * @param workerSrc
      * @param onDoneCallback
      * @param onErrorCallback
      */
     public function AudioParallelRenderer(workerSrc:ByteArray, onDoneCallback:Function, onErrorCallback:Function) {
+        _uid = Strings.UUID;
         _$renderer_ = this;
         _onDoneCallback = onDoneCallback;
         _onErrorCallback = onErrorCallback;
@@ -75,6 +81,28 @@ public class AudioParallelRenderer {
     }
 
     /**
+     * This function returns a unique string identifier for this renderer, which is beneficial in contexts where
+     * multiple renderers are managed.
+     */
+    public function get uid () : String {
+        return _uid;
+    }
+
+    /**
+     * Holds the (audio storage) byte position that was in effect before parallel rendering started.
+     * NOTE: this value is used only externally, by the logic that calculates the rendering speed. It is
+     * not used by the AudioParallelRenderer instance itself.
+     */
+    public var positionBeforeRendering:int = -1;
+
+    /**
+     * Holds the local time (in milliseconds) that was recorded before parallel rendering started.
+     * NOTE: this value is used only externally, by the logic that calculates the rendering speed. It is
+     * not used by the AudioParallelRenderer instance itself.
+     */
+    public var timeBeforeRendering:Number;
+
+    /**
      * The last recorded error detail if applicable; `null` otherwise.
      */
     public function get errorDetail():Object {
@@ -96,45 +124,31 @@ public class AudioParallelRenderer {
     }
 
     /**
-     * Holds the (audio storage) byte position that was in effect before parallel rendering started.
-     * NOTE: this value is used only externally, by the logic that calculates the rendering speed. It is not used
-     * by the AudioParallelRenderer instance itself.
-     */
-    public var positionBeforeRendering:int = -1;
-
-    /**
-     * Holds the local time (in milliseconds) that was recorded before parallel rendering started.
-     * NOTE: this value is used only externally, by the logic that calculates the rendering speed. It is not used
-     * by the AudioParallelRenderer instance itself.
-     */
-    public var timeBeforeRendering:Number;
-
-    /**
-     * Gives this AudioParallelRenderer instance something (else) to work on. A renderer can be "reused" by completely
-     * changing its assignment after its initial task completed, thus saving CPU time (because destroying and creating
-     * background workers/threads is a CPU-consuming operation).
+     * Gives this AudioParallelRenderer instance something (else) to work on. A renderer can be "reused" by
+     * completely changing its assignment after its initial task completed, thus saving CPU time (because
+     * destroying and creating background workers/threads is a CPU-consuming operation).
      *
      * @param   tracks
      *          The (slice of) organized audio map/MIDI that is to be rendered into audio; (see
      *          SynthProxy.preRenderAudio() for details).
      *
      * @param   audioStorage
-     *          Optional in subsequent calls. The storage where the rendered audio is to be deposited. If not given, the
-     *          last known storage will be used.
+     *          Optional in subsequent calls. The storage where the rendered audio is to be deposited.
+     *          If not given, the last known storage will be used.
      *
-     *          NOTE: this method DOES NOT empty the storage before passing it to the renderer, and the renderer
-     *          doesn't either; moreover, it WILL MIX newly rendered content with any audio that is found in the
-     *          storage, for as long as the `sessionId` does not change.
+     *          NOTE: this method DOES NOT empty the storage before passing it to the renderer, and the
+     *          renderer doesn't either; moreover, it WILL MIX newly rendered content with any audio
+     *          is found in the storage, for as long as the `sessionId` does not change.
      *
      * @param   sessionId
-     *          Optional in subsequent calls. . The rendering session id to send to the `SynthProxy.preRenderAudio()`
-     *          method. If not given, the last known session id will be used.
+     *          Optional in subsequent calls. . The rendering session id to send to the
+     *          `SynthProxy.preRenderAudio()` method. If not given, the last known session id will be used.
      *
      * @param   soundsMap
-     *          Optional in subsequent calls. The loaded sounds assignment map, as an Object with sound presets as keys
-     *          (e.g., "40" points to a Violin sound) and unique identifiers for pre-shared ByteArrays as values. The
-     *          ByteArrays contain the actual sound bytes (e.g., the samples for a Violin sound). If not given, the last
-     *          known sounds map will be used.
+     *          Optional in subsequent calls. The loaded sounds assignment map, as an Object with sound
+     *          presets as keys (e.g., "40" points to a Violin sound) and unique identifiers for pre-shared
+     *          ByteArrays as values. The ByteArrays contain the actual sound bytes (e.g., the samples for
+     *          a Violin sound). If not given, the last known sounds map will be used.
      */
     public function assignWork(tracks:Array, audioStorage:ByteArray = null, sessionId:String = null,
                                soundsMap:Object = null):void {
@@ -169,11 +183,11 @@ public class AudioParallelRenderer {
     }
 
     /**
-     * Causes this AudioParallelRenderer instance to be put out of service. Terminates the internal background worker
-     * and explicitly releases all occupied memory.
+     * Causes this AudioParallelRenderer instance to be put out of service. Terminates the internal background
+     * worker and explicitly releases all occupied memory.
      *
-     * IMPORTANT: after calling this method, the AudioParallelRenderer instance is left in an inoperable state, and any
-     * attempt to use it will result in an exception.
+     * IMPORTANT: after calling this method, the AudioParallelRenderer instance is left in an inoperable
+     * state, and any attempt to use it will result in an exception.
      */
     public function decommission():void {
 
@@ -186,9 +200,9 @@ public class AudioParallelRenderer {
         if (_worker && _worker.state == WorkerState.RUNNING) {
 
             /**
-             * Executed when the internal listener of the worker being decommissioned was removed. Continues the
-             * process by removing the external listener, releasing all worker-specific shared properties, terminating
-             * the worker, and setting it for garbage collection.
+             * Executed when the internal listener of the worker being decommissioned was removed. Continues
+             * the process by removing the external listener, releasing all worker-specific shared properties,
+             * terminating the worker, and setting it for garbage collection.
              * @param event
              */
             function terminateWorker(event:Event):void {
@@ -214,7 +228,8 @@ public class AudioParallelRenderer {
                 // Terminates the worker.
                 _worker.terminate();
 
-                // Releases all pointers to the worker instance and related data, so that it can be garbage collected.
+                // Releases all pointers to the worker instance and related data, so that it can be garbage
+                // collected.
                 _canOperate = false;
                 _asyncChain = null;
                 _errorDetail = null;
@@ -238,9 +253,9 @@ public class AudioParallelRenderer {
                 _onErrorCallback = null;
             }
 
-            // Removes the event listener from INSIDE the worker (the one that listens to "inbound" messages, from a
-            // worker perspective). After doing this, the worker is left "deaf", i.e., unable to respond to any future
-            // requests from outside.
+            // Removes the event listener from INSIDE the worker (the one that listens to "inbound" messages,
+            // from a worker perspective). After doing this, the worker is left "deaf", i.e., unable to
+            // respond to any future requests from outside.
             _workerChannel.addEventListener(Event.CHANNEL_MESSAGE, terminateWorker);
             var command:Object = {};
             command[WorkersCommon.COMMAND_NAME] = WorkersCommon.COMMAND_RELEASE_LISTENER;
@@ -252,17 +267,18 @@ public class AudioParallelRenderer {
     }
 
     /**
-     * Initializes, configures and starts a background Worker; reports back when done (or when an error has occurred),
-     * via provided `callback`.
+     * Initializes, configures and starts a background Worker; reports back when done (or when an error has
+     * occurred), via provided `callback`.
      *
      * @param   callBack
-     *          Function to call when done, or when an error has occurred. Must accept a parameter of type Object.
-     *          See `AudioWorker._reportCommandExecutionError()` or `AudioWorker._reportCommandSuccess()` for expected
-     *          structure.
+     *          Function to call when done, or when an error has occurred. Must accept a parameter of type
+     *          Object.
+     *          See `AudioWorker._reportCommandExecutionError()` or `AudioWorker._reportCommandSuccess()`
+     *          for expected structure.
      */
     private function _doMakeWorker(callBack:Function):void {
 
-        // Structure we use for packaging information to report back with, being success or failure.
+        // Structure we use for packaging information to report back with, being that about success or failure.
         var report:Object = {};
 
         // One-time closure, to ensure that our worker's internal state actually changes to 'running'.
@@ -311,18 +327,19 @@ public class AudioParallelRenderer {
      * Sets up the internal worker by sending it its inputs & outputs (and additional info, as needed).
      *
      * @param   callBack
-     *          Function to call when done, or when an error has occurred. Must accept a parameter of type Object.
-     *          See `AudioWorker._reportCommandExecutionError()` or `AudioWorker._reportCommandSuccess()` for expected
-     *          structure.
+     *          Function to call when done, or when an error has occurred. Must accept a parameter of type
+     *          Object.
+     *          See `AudioWorker._reportCommandExecutionError()` or `AudioWorker._reportCommandSuccess()`
+     *          for expected structure.
      */
     private function _doAssignWork(callBack:Function):void {
 
         // Provide the worker with sound fonts, so that it can render (MIDI to) audio.
         //
-        // The `_soundsMapValue` is an Object with numeric strings as keys, and ByteArrays as values. We set the
-        // ByteArrays as shared properties, and assign them worker-dependent UIDs, which we place in a
-        // "shallowSoundsMap" Object that maintains the original keys from `_soundsMapValue`. We then set the
-        // `shallowSoundsMap` Object as a shared property too (inside a dedicated, shared ByteArray named
+        // The `_soundsMapValue` is an Object with numeric strings as keys, and ByteArrays as values.
+        // We set the ByteArrays as shared properties, and assign them worker-dependent UIDs, which we place
+        // in a "shallowSoundsMap" Object that maintains the original keys from `_soundsMapValue`. We then set
+        // the `shallowSoundsMap` Object as a shared property too (inside a dedicated, shared ByteArray named
         // "_soundsMapStorage").
         if (_soundsMapValue) {
             if (!_soundsMapStorage) {
@@ -373,8 +390,8 @@ public class AudioParallelRenderer {
         // Provide the worker with a place where to store its output.
         _worker.setSharedProperty(WorkersCommon.OUTPUT_BYTES + _workerUid, _renderedAudioStorage);
 
-        // Use a one-time closure to verify whether our worker successfully accepted the new assignment. The closure
-        // simply forwards the worker's response to our `callback`.
+        // Use a one-time closure to verify whether our worker successfully accepted the new assignment. The
+        // closure simply forwards the worker's response to our `callback`.
         function onWorkerMessage(event:Event):void {
             _workerChannel.removeEventListener(Event.CHANNEL_MESSAGE, onWorkerMessage);
             var report:Object = _workerChannel.receive();
@@ -393,14 +410,15 @@ public class AudioParallelRenderer {
      * Orders the internal background worker to begin rendering audio.
      *
      * @param   callBack
-     *          Function to call when done, or when an error has occurred. Must accept a parameter of type Object.
-     *          See `AudioWorker._reportCommandExecutionError()` or `AudioWorker._reportCommandSuccess()` for expected
-     *          structure.
+     *          Function to call when done, or when an error has occurred. Must accept a parameter of type
+     *          Object.
+     *          See `AudioWorker._reportCommandExecutionError()` or `AudioWorker._reportCommandSuccess()` for
+     *          expected structure.
      */
     private function _doExecuteWork(callBack:Function):void {
 
-        // Use a one-time closure to verify whether our worker successfully accepted the new assignment. The closure
-        // simply forwards the worker's response to our `callback`.
+        // Use a one-time closure to verify whether our worker successfully accepted the new assignment.
+        // The closure simply forwards the worker's response to our `callback`.
         function onWorkerMessage(event:Event):void {
             _workerChannel.removeEventListener(Event.CHANNEL_MESSAGE, onWorkerMessage);
             var report:Object = _workerChannel.receive();
@@ -415,11 +433,13 @@ public class AudioParallelRenderer {
     }
 
     /**
-     * Asynchronously calls, in succession, a number of internal, asynchronous functions, provided that none of them
-     * reports an error (in which case, the class-level `onErrorCallback()` callback is invoked. When the chain is
-     * empty, the class-level `onErrorCallback()` callback is invoked. Both class-level callback are invoked with a
-     * single argument, the current AudioParallelRenderer instance. Details about the last recorded error, if should
-     * be the case, can be obtained via the public `errorDetail` getter.
+     * Asynchronously calls, in succession, a number of internal, asynchronous functions, provided that none
+     * of them reports an error (in which case, the class-level `onErrorCallback()` callback is invoked. When
+     * the chain is empty (because all of the functions in the chain have been successfully executed) the
+     * class-level `_onDoneCallback()` callback is invoked. Both class-level callbacks are invoked with a
+     * single argument, the current AudioParallelRenderer instance. Details about the last recorded error, if
+     * that should be the case, can then be obtained via the public `errorDetail` getter of
+     * AudioParallelRenderer.
      */
     private function _runAsyncChain(chain:Vector.<Function>):void {
 
@@ -449,9 +469,9 @@ public class AudioParallelRenderer {
     }
 
     /**
-     * Establishes whether given `response` is an indicative of failure, based on a list of known error formats and
-     * tokens.
-     * @return  `True` is given `response` seems to indicate failure, `false` otherwise.
+     * Establishes whether given `response` is an indicative of failure, based on a list of known error
+     * formats and tokens.
+     * @return  `True` if given `response` seems to indicate failure, `false` otherwise.
      */
     private static function _indicatesFailure(response:Object):Boolean {
         if (response && (WorkersCommon.REPORT_NAME in response)) {
@@ -466,8 +486,8 @@ public class AudioParallelRenderer {
     }
 
     /**
-     * Validates given `sourceBytes` ByteArray as a potentially valid SWF source for a background Worker. Currently
-     * only looks for ByteArray size and SWF header signature.
+     * Validates given `sourceBytes` ByteArray as a potentially valid SWF source for a background Worker.
+     * Currently, it only checks the ByteArray's size, and looks for a SWF header/signature.
      *
      * @return  `Null` if given `sourceBytes` passes validation, or an Error instance with details otherwise.
      */

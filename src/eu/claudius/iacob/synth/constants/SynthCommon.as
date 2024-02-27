@@ -1,4 +1,8 @@
 package eu.claudius.iacob.synth.constants {
+
+/**
+ * Holds constants defining basic audio synthesis aspects.
+ */
 public class SynthCommon {
     public function SynthCommon() {}
 

@@ -51,7 +51,7 @@ public class ProgressReport {
 
     /**
      * Helper class meant to standardize status communication between the SynthProxy and the outer
-     * world, but usable in other scenarios too.
+     * world, but usable in other scenarios as well.
      */
     public function ProgressReport(state:String = null, subState:String = null, item:String = null,
                                    itemState:String = null, globalPercent:Number = NaN,
@@ -81,7 +81,7 @@ public class ProgressReport {
     /**
      * Field to use for expressing the "particular", or "low-level" status of the system, e.g.:
      * a `subState` of `SUBSTATE_LOADING_SOUNDS` can be used to display the UI for monitoring
-     * the sound fonts loading, whereas a `subState` of `SUBSTATE_RENDERING_AUDIO` can be used
+     * the sound files loading, whereas a `subState` of `SUBSTATE_RENDERING_AUDIO` can be used
      * to display the UI for monitoring the audio generation (aka "pre-rendering").
      */
     public function get subState():String {
@@ -94,7 +94,7 @@ public class ProgressReport {
 
     /**
      * Field to use for expressing the item that should be of particular interest at a given time,
-     * such as the sound font file currently being (or having been) loaded.
+     * such as the sound file currently being (or having been) loaded.
      */
     public function get item():String {
         return _item;
@@ -106,8 +106,8 @@ public class ProgressReport {
 
 
     /**
-     * Fields to use for expressing a standardized "state" the current `item` is in, such as the
-     * current sound font file being "in progress", or "loaded/done", or having suffered an "error".
+     * Field to use for expressing a standardized "state" the current `item` is in, such as the
+     * current sound file being "in progress", or "loaded/done", or having suffered an "error".
      */
     public function get itemState():String {
         return _itemState;
@@ -119,7 +119,7 @@ public class ProgressReport {
 
     /**
      * Free-form field that could be used to add detail about the current item, such as the
-     * reason why the current sound font file cannot be loaded (e.g., it could be missing or an
+     * reason why the current sound file cannot be loaded (e.g., it could be missing or an
      * IO error could have occurred).
      */
     public function get itemDetail():String {
@@ -132,7 +132,7 @@ public class ProgressReport {
 
     /**
      * Field to use for expressing the "general", or "high-level" degree of completion of the entire process,
-     * such as "to which extent" is loading the sound fonts (or the audio rendering) complete.
+     * such as "to which extent" is the loading of sound files (or the rendering of audio) complete.
      */
     public function get globalPercent():Number {
         return _globalPercent;
@@ -143,8 +143,8 @@ public class ProgressReport {
     }
 
     /**
-     * Field to use for expressing the ""particular", or "low-level" degree of completion of a part of the
-     * entire process, such as "to which extent" is a specific sound font loaded, or a specific track
+     * Field to use for expressing the "particular", or "low-level" degree of completion of a part of the
+     * entire process, such as "to which extent" is a specific sound file loaded, or a specific MIDI track
      * rendered into audio form.
      */
     public function get localPercent():Number {

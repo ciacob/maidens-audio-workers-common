@@ -1,4 +1,9 @@
 package eu.claudius.iacob.synth.constants {
+
+    /**
+     * Holds constants defining various values to be used inside an AnnotationTrackObject's `payload`.
+     * @see eu.claudius.iacob.synth.sound.map.AnnotationTrackObject for details.
+     */
     public class PayloadKeys {
         public function PayloadKeys() {
         }

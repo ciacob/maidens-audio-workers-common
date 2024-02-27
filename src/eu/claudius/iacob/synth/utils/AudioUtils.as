@@ -5,7 +5,7 @@ import flash.utils.ByteArray;
 import flash.utils.Endian;
 
 /**
- * General-purpose class with ready to use utilities for managing audio.
+ * General-purpose class with ready-to-use utilities for managing audio.
  */
 public class AudioUtils {
 
@@ -15,7 +15,7 @@ public class AudioUtils {
     }
 
     /**
-     * Creates and returns a audio samples-compatible ByteArray.
+     * Creates and returns a audio-samples-compatible ByteArray.
      */
     public static function makeSamplesStorage():ByteArray {
         if (_recyclableSampleStorages.length > 0) {
@@ -27,8 +27,8 @@ public class AudioUtils {
     }
 
     /**
-     * Clears and sets for later reuse the given `storage` ByteArray. The idea behind this mechanism is that it might
-     * consume more CPU to create and garbage collect ByteArrays that to reuse them if possible.
+     * Clears and sets for later reuse the given `storage` ByteArray. The idea behind this mechanism is that
+     * it might consume more CPU to destroy, garbage collect, and create new ByteArrays that to reuse them if possible.
      *
      * @param   storage
      *          A "little endian" ByteArray to reuse.
@@ -39,9 +39,8 @@ public class AudioUtils {
     }
 
     /**
-     * Normalizes in-place all floats (32 bit numbers) found in given `samplesBuffer` ByteArray, trying
-     * to get the highest peak as close as possible to `1` (with respect to the SAFETY_THRESHOLD
-     * constant). No value is returned, the original ByteArray is modified.
+     * Normalizes all floats (32 bit numbers) that were found in the given `samplesBuffer` ByteArray, trying to get the
+     * highest peak in-there as close as possible to `1` (with respect to the SAFETY_THRESHOLD constant).
      *
      * @param   soundBytes
      *          A ByteArray containing floats (32 bit floating point numbers), typically between `1` (maximum waveform

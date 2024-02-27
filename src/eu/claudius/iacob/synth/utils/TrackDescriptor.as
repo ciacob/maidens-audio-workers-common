@@ -8,7 +8,8 @@ public class TrackDescriptor {
 
     /**
      * Helper class to briefly group all information needed to create a Track instance
-     * (eu.claudius.iacob.synth.sound.map.Track). Also usable for defining mutes and solos (when we support them).
+     * (eu.claudius.iacob.synth.sound.map.Track). Also usable for defining mutes and solos (of use when we will support
+     * them).
      *
      * @param   name
      *          The name of the Track.

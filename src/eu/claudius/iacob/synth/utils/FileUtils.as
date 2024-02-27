@@ -13,6 +13,9 @@ import flash.utils.Endian;
 
 import ro.ciacob.utils.constants.CommonStrings;
 
+/**
+ * Utility class essentially providing tools for saving ActionScript audio to disk, in the WAVE 16bit format.
+ */
 public class FileUtils extends EventDispatcher {
 
     private static const RIFF_HEADER:String = 'RIFF';
@@ -50,9 +53,7 @@ public class FileUtils extends EventDispatcher {
      *          A file where to store the resulting WAVE data; @see `FileUtils.dumpToDisk()` for details.
      *
      * @param   stereo
-     *          Optional, default `false` (i.e., mono); @see `FileUtils.dumpToDisk()` for details.
-     *
-     * @throws  If this class was initialized with `null` for its constructor's `streamer` argument.
+     *          Optional, default `false` (i.e.,default is mono); @see `FileUtils.dumpToDisk()` for details.
      */
     public function streamToDisk(streamer : StreamingUtils, sounds:Object, tracks:Array, file:File,
                                  stereo:Boolean = false):void {
@@ -74,25 +75,27 @@ public class FileUtils extends EventDispatcher {
      * SystemStatusEvents are dispatched that monitor the process.
      *
      * @param   as3SoundBytes
-     *          ByteArray containing sound samples in ActionScript format. These will be silently converted to WAVE
-     *          format in the process (original sound date will not be touched).
+     *          ByteArray containing sound samples in ActionScript format. These will be on-the-fly converted to WAVE
+     *          format before writing to disk (original sound data will not be touched).
      *
      * @param   file
      *          A file where to store the resulting WAVE data. It is assumed to be existing and writeable (this method
-     *          does not check); runtime exceptions are thrown if it is not.
+     *          does not check); runtime exceptions are thrown if it is not so.
      *          NOTE: this method overwrites the given `file` if it exists. If you need to obtain confirmation from the
-     *          user before overwriting existing file, you must obtain it EXTERNALLY, i.e., in your own code.
+     *          user before overwriting existing file, you must obtain it EXTERNALLY, i.e., in your own (client) code.
      *
      * @param   stereo
-     *          Optional, default `false` (i.e., mono). Whether to mark the resulting *.WAV file as using 1 channel (`false`,
-     *          the default), or two channels (`true`). Note that this does NOT attempt to convert the data inside
-     *          `soundBytes`, which can result in the resulting file playing at the wrong speed if this argument is set
-     *          incorrectly (because the existing material will be split or not onto two channels, thus altering the
-     *          actual sampling rate).You must know whether the ActionScript sound was recorded in mono or in stereo,
-     *          and you must set this parameter accordingly.
+     *          Optional, default `false` (i.e.,default is mono). Whether to mark the resulting *.WAV file as using
+     *          1 channel (the default, `false`), or two channels (`true`).
+     *          NOTE: the `stereo` argument merely controls whether the existing material will be split
+     *          (for stereo = `true`) or not (for stereo = `false`) onto two channels. Setting `stereo` to `true` will
+     *          NOT, in itself, convert the data already stored in `soundBytes` (i.e., from mono to stereo). You must
+     *          know whether you have stereophonic or monophonic audio data stored in-there; setting, e.g.,
+     *          `stereo` = `true` on monophonic data can yield a WAV file that seems to be "playing at half speed",
+     *          because there are not enough samples on each channel to "meet" the expected sample rate.
      *
      * @param   normalize
-     *          Optional, default `false`. Whether to normalize given `soundBytes` prior to converting it to WAVE
+     *          Optional, default `false`. Whether to normalize given `soundBytes` prior to converting them to WAVE
      *          format. Normalization level is given by the `SynthCommon.CEIL_LEVEL` constant.
      */
     public function dumpToDisk(as3SoundBytes:ByteArray, file:File, stereo:Boolean = false,
@@ -125,7 +128,7 @@ public class FileUtils extends EventDispatcher {
         // Format: Contains the letters "WAVE".
         waveFileData.writeUTFBytes(WAVE_HEADER);
 
-        // The "WAVE" format consists of two subchunks: "fmt " and "data". The "fmt " sub-chunk describes the sound
+        // The "WAVE" format consists of two sub-chunks: "fmt " and "data". The "fmt " sub-chunk describes the sound
         // data's format. Subchunk1ID: Contains the letters "fmt ".
         waveFileData.writeUTFBytes(SUB_CHUNK1_ID);
 
@@ -183,9 +186,9 @@ public class FileUtils extends EventDispatcher {
 
     /**
      * Executed when OutputProgressEvents are fired from the FileStream instance responsible for writing the generated
-     * *.wav file to disk. Redispatches progress information via our standardized SystemStatusEvent mechanism, and
+     * WAV file to disk. Redispatches progress information via our standardized SystemStatusEvent mechanism, and
      * closes the stream when there are no bytes left to be written.
-     * @param event
+     * @param   event
      */
     private function _doOnProgressEvent (event : OutputProgressEvent) : void {
         var fileStream : FileStream = (event.target as FileStream);
@@ -209,9 +212,9 @@ public class FileUtils extends EventDispatcher {
 
     /**
      * Executed when an IOErrorEvent is fired from the FileStream instance responsible for writing the generated
-     * *.wav file to disk. Redispatches information via our standardized SystemStatusEvent mechanism, and closes the
+     * WAV file to disk. Redispatches information via our standardized SystemStatusEvent mechanism, and closes the
      * stream.
-     * @param event
+     * @param   event
      */
     private function _doOnIoError (event : IOErrorEvent) : void {
         var fileStream : FileStream = (event.target as FileStream);
@@ -238,7 +241,7 @@ public class FileUtils extends EventDispatcher {
      * @param   as3SoundBytes
      *          Original sound bytes, in actionscript format.
      *
-     * @return  Translated sound bytes, in Wave format.
+     * @return  Translated sound bytes, in WAVE 16bit format.
      */
     private static function _toWav16Format(as3SoundBytes:ByteArray):ByteArray {
         var translatedBytes:ByteArray = new ByteArray;

@@ -1,4 +1,13 @@
 package eu.claudius.iacob.synth.constants {
+
+/**
+ * Holds constants defining various type of operations to be described by an AnnotationTrackObject payload's "type"
+ * (defined as PayloadKeys.TYPE).
+ * 
+ * For details:
+ * @see eu.claudius.iacob.synth.sound.map.AnnotationTrackObject
+ * @see eu.claudius.iacob.synth.constants.PayloadKeys
+ */
 public class OperationTypes {
     public function OperationTypes() {
     }

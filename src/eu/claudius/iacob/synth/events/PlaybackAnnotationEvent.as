@@ -9,7 +9,7 @@ public class PlaybackAnnotationEvent extends Event {
 
         /**
          * Event to dispatch when a previously registered annotation is to be activated (e.g., when it is about time to
-         * highlight a note on a musical score because its corresponding sound has triggered).
+         * highlight a note on a musical score, because its corresponding sound has triggered).
          *
          * @param   payload
          *          The annotation body; actual data type varies.

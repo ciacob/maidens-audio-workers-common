@@ -15,7 +15,10 @@ import ro.ciacob.utils.constants.CommonStrings;
 
 
 /**
- * Helper class that operates the given ISynthProxy instance the way that it streams the audio rendering process.
+ * Helper class that operates the given ISynthProxy instance the way that it "streams" the audio rendering process.
+ * That is, instead of rendering all the audio entirely before playback becomes available, the proxy will render
+ * it in chunks, dispatching progress reports, and will begin playback as soon as there is enough rendered material
+ * and (promising) enough rendering speed.
  */
 public class StreamingUtils extends EventDispatcher {
 
@@ -66,30 +69,31 @@ public class StreamingUtils extends EventDispatcher {
 
 
     /**
-     * Helper class that operates the given ISynthProxy instance the way that it streams the audio rendering process.
-     * That is, instead of rendering all the audio entirely before playback becomes available, the proxy will now render
-     * it in chunks, dispatching progress reports via status events, and will begin playback as soon as there is enough
-     * rendered material and enough rendering speed.
+     * Helper class that operates the given ISynthProxy instance the way that it "streams" the audio rendering process.
+     * That is, instead of rendering all the audio entirely before playback becomes available, the proxy will render
+     * it in chunks, dispatching progress reports, and will begin playback as soon as there is enough rendered material
+     * and (promising) enough rendering speed.
      *
      * @param   workerBytes
      *          A ByteArray containing the bytes of the SWF file the AudioWorker.as class has been compiled into.
-     *          Each additional background worker this class uses will be created out of the provided workerBytes.
+     *          Each additional background worker this class uses will be created out of these provided `workerBytes`.
      *
      * @param   proxy
-     *          The ISynthProxy instance the class will control.
+     *          A standalone ISynthProxy instance that will mainly be used as a "player" of the material rendered by the
+     *          background worker(s).
      *
      * @param   autoPlayback
-     *          Whether to start playback as soon as all the conditions for starting playback are met (i.e., minimum
-     *          average rendering speed, or buffer full). Optional, defaults to `true`.
+     *          Whether to start playback as soon as all the conditions for starting playback are met. Optional,
+     *          defaults to `true`.
      *
      * @param   autoResume
      *          Whether to resume playback (after a dropout caused by buffer under-run) as soon as the conditions for
      *          starting playback are met (again). Optional, defaults to `true`.
      *
      * @param   maxNumWorkers
-     *          The maximum number of actionscript Workers (beside the "main", or "primordial" Worker) to attempt to
+     *          The maximum number of actionscript workers (beside the "main", or "primordial" worker) to attempt to
      *          employ, in order to speed up rendering. Optional, defaults to `1`.
-     *          NOTE: at least one additional Worker will always be used, or else playback could not be engaged while
+     *          NOTE: at least one additional worker will always be used, or else playback could not be engaged while
      *          rendering.
      *
      * @constructor
@@ -474,9 +478,15 @@ public class StreamingUtils extends EventDispatcher {
     }
 
     /**
-     * Executing when rendering a chunk (or "slice") of the tracks has been completed.
-     * TODO: document.
-     * TODO: implement.
+     * This method is executed immediately after rendering a chunk (or "slice") of the MIDI tracks to audio. It analyzes
+     * the current speed of the rendering process and engages playback (if not already in progress) when it appears that
+     * the chances of drop-outs are moderate. It also dispatches rendering progress information to the outer world (via a
+     * SystemStatusEvent) and orders processing of the next chunk (if there is one).
+     *
+     * @param   renderer
+     *          An instance of the `AudioParallelRenderer` class, utilized solely for rendering performance analysis
+     *          It furnishes position and time data before rendering commences, enabling the computation of rendering
+     *          speed, through comparison with data recorded after the rendering concludes.
      */
     private function _onChunkDone(renderer:AudioParallelRenderer):void {
 
@@ -547,15 +557,15 @@ public class StreamingUtils extends EventDispatcher {
     }
 
     /**
-     * Executed during playback as the virtual playhead is updating its position.
+     * Executed during playback, as the virtual playhead is updating its position.
      * @param event
      */
     private function _onPLayBackPositionChanged(event:PlaybackPositionEvent):void {
         _playheadAt = event.position;
         var report:ProgressReport;
 
-        // We also get "playback position events" from the proxy when playback is rewind, which we want to ignore,
-        // and definitely not consider them when assessing dropouts.
+        // We also get "playback position events" from the proxy when playback is rewinded, which we want to ignore,
+        // and definitely NOT consider them when checking for dropouts.
         if (_isPlaybackInProgress) {
             if (_playheadAt < _safeToPlayFrom || _playheadAt > _safeToPlayTo) {
                 _haveDropout = true;
@@ -588,7 +598,7 @@ public class StreamingUtils extends EventDispatcher {
      * provided `report`.
      *
      * @param   report
-     *          AnalysisResult instance containing containing recommendations meant to improve the overall process
+     *          AnalysisResult instance containing recommendations meant to improve the overall process
      *          speed and efficiency.
      */
     private function _updateStreamingParams(report:AnalysisResult):void {
@@ -616,7 +626,7 @@ public class StreamingUtils extends EventDispatcher {
      *   that Array is a clone, anyway).
      *
      *  - We will not search for matching instructions to include in the slice across the entire "tracks" in the original
-     *    Array, since that would waste CPU; the first not matching instruction of `TYPE_SEEK_TO` or will conclude the
+     *    Array, since that would waste CPU; the first not matching instruction of `TYPE_SEEK_TO` will conclude the
      *    search for the respective track.
      *
      * NOTE: all instructions of `TYPE_HIGHLIGHT_SCORE_ITEM` will be routed in bulk to the synthesizer instance
@@ -640,7 +650,7 @@ public class StreamingUtils extends EventDispatcher {
      * @return  A new Array, containing instructions that chiefly deal with events occurring within the defined
      *          timeframe. Can return an empty Array if the timeframe overlaps an empty area in the original "tracks"
      *          Array. This can sometimes happen due to tied notes extending far beyond the timeframe (so that future
-     *          runs of this method will only find the "void" left behind).
+     *          runs of this method will only find the "void" that was left behind by their removal on a previous pass).
      *
      * SIDE EFFECT: stores the earliest of all the seek positions registered, as a static property on the returned
      * Array. The property is accessible under the key of `EARLIEST_SEEK_POSITION`.

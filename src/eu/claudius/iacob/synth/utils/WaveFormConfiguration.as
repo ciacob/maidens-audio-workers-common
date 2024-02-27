@@ -10,7 +10,8 @@ public class WaveFormConfiguration {
     private var _makeUpFactor:Number;
 
     /**
-     * Sealed container to hold all the graphical properties needed for drawing a waveform representation.
+     * Sealed container to hold all the graphical properties needed for drawing a waveform representation. Properties
+     * here defined are used selectively by AudioGraphics' `drawWaveForm()` and `drawSimplifiedWaveForm()` methods.
      *
      * @param   markingsLineThickness
      *          Thickness of the line that marks the waveform center; the same settings are used to draw the border.

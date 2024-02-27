@@ -13,10 +13,10 @@ import flash.utils.ByteArray;
 import ro.ciacob.utils.Strings;
 
 /**
- * Helper class that loads sound font files base on a given list of GM patch numbers (aka "presets"). The files are
- * located based on a given home folder and extension (their name, otherwise, should be the preset number). Once
- * located, the files are asynchronously loaded into an internal cache, while the client code is informed on the
- * progress via SystemStatusEvent dispatches. The cache itself can e retrieved via the `sounds` getter.
+ * Helper class that loads soundfont files based on a given list of General MIDI patch numbers (aka "presets"). The
+ * files are located based on a given home folder and extension (their name, otherwise, should be the preset number).
+ * Once located, the files are asynchronously loaded into an internal cache, while the client code is informed on the
+ * progress via SystemStatusEvent dispatches. The cache itself can be retrieved via the `sounds` getter.
  */
 public class SoundLoader extends EventDispatcher {
 
@@ -39,6 +39,11 @@ public class SoundLoader extends EventDispatcher {
 
 
     /**
+     * Helper class that loads soundfont files based on a given list of General MIDI patch numbers (aka "presets"). The
+     * files are located based on a given home folder and extension (their name, otherwise, should be the preset number).
+     * Once located, the files are asynchronously loaded into an internal cache, while the client code is informed on the
+     * progress via SystemStatusEvent dispatches. The cache itself can be retrieved via the `sounds` getter.
+     *
      * @constructor
      */
     public function SoundLoader() {
@@ -51,24 +56,25 @@ public class SoundLoader extends EventDispatcher {
      * be externally retrieved, via the `sounds` getter.
      *
      * @param       presets
-     *              A Vector with PresetDescriptor instances, each containing the preset number and an associated name.
+     *              A Vector with PresetDescriptor instances, each containing the preset's number and its associated
+     *              name.
      *
      * @param       soundFilesHome
-     *              Relative path to the folder where *.sf2 files are expected to live. Optional; if not given, defaults
-     *              to the value of the `SOUND_FILES_HOME` constant.
+     *              Main executable-relative path to the folder where *.sf2 files are expected to live. Optional; if not
+     *              given, defaults to the value of the `SOUND_FILES_HOME` constant.
      *
      * @param       soundFilesExtension
-     *              Extension the files containing sound samples are expecting to have. Optional, if not given, defaults
+     *              Extension the files containing sound samples are expecting to use. Optional; if not given, defaults
      *              to the value of the `SOUND_FILES_EXTENSION` constant.
      *
      * @dispatch    Causes a SystemStatusEvent to be dispatched when any of the following occurs:
-     *              - there is progress in loading a *.sf2 file;
-     *              - a *.sf2 has been completely loaded and cached;
-     *              - all suitable *.sf2 files have been completely loaded and cached;
-     *              - a *.sf2 file is missing;
-     *              - a *.sf2 file cannot be loaded for reasons other than the file missing from disk.
-     *              The `report` property of the dispatched SystemStatusEvent will contain a ProgressReport instance with
-     *              details.
+     *              - there is progress in loading a sound file;
+     *              - a sound file has been completely loaded and cached;
+     *              - all suitable sound files have been completely loaded and cached;
+     *              - a sound file is missing;
+     *              - a sound file cannot be loaded for reasons other than the file missing from disk.
+     *              The `report` property of the dispatched SystemStatusEvent will contain a ProgressReport instance
+     *              with details.
      */
     public function preloadSounds(presets:Vector.<PresetDescriptor>,
                                   soundFilesHome:String = null,
@@ -95,15 +101,17 @@ public class SoundLoader extends EventDispatcher {
      * bytes loaded from a sound font file).
      * The ByteArrays are indexed based on the General MIDI patch number that represents the musical instrument
      * emulation inside the loaded sound font file. E.g., the samples for a Violin sound would reside in a file called
-     * "40.sf2" (the file must not contain other sounds), and would be loaded in a ByteArray that gets stored under
-     * index `40` in the sounds cache Object: that is because, in the GM specification, Violin has patch number 40.
+     * "40.<soundFilesExtension>" (the file must not contain other sounds), and would be loaded in a ByteArray that gets
+     * stored under index "40" in the sounds cache Object: that is because, in the GM specification, solo Violin has
+     * patch number 40.
      */
     public function get sounds():Object {
         return _soundsCache;
     }
 
     /**
-     * Set internal flags to their initial value, so that loading a new set of preset descriptors is possible.
+     * Sets internal flags back to their initial value, so that loading a new set of preset descriptors becomes
+     * possible.
      */
     private function _reset():void {
         _presetNumber = 0;
@@ -117,7 +125,7 @@ public class SoundLoader extends EventDispatcher {
     }
 
     /**
-     * Dispatches received `report` inside a SystemStatusEvent.
+     * Re-dispatches received `report`, wrapping it inside a SystemStatusEvent.
      * @param report
      */
     private function _broadcastReport(report:ProgressReport):void {
@@ -136,7 +144,7 @@ public class SoundLoader extends EventDispatcher {
     }
 
     /**
-     * Executed when all received presets have already been dealt with in previous loading sessions, so that their
+     * Executed when all requested presets have already been dealt with in previous loading sessions, so that their
      * respective ByteArrays are already cached. Compiles and broadcasts a specific status report.
      */
     private function _reportNothingToDo():void {
@@ -151,7 +159,7 @@ public class SoundLoader extends EventDispatcher {
     }
 
     /**
-     * Executed when the process completes, but all received presets were not successfully handled. Compiles and
+     * Executed when the process completes, but none of the requested presets could be successfully loaded. Compiles and
      * broadcasts a specific status report, which includes a detailed list of all failures.
      */
     private function _reportAllFailed():void {
@@ -160,7 +168,8 @@ public class SoundLoader extends EventDispatcher {
         progress.subState = ProgressReport.SUBSTATE_ERROR;
         progress.item = ProgressReport.ERROR_LOADING_FILES;
         progress.itemState = ProgressReport.ITEM_STATE_ERROR;
-        progress.itemDetail = Strings.sprintf(ProgressReport.PARTIAL_LOAD_TEMPLATE, _numPresetsLoaded, _duePresets, _failedFilePaths.join(',\n\t'));
+        progress.itemDetail = Strings.sprintf(ProgressReport.PARTIAL_LOAD_TEMPLATE, _numPresetsLoaded, _duePresets,
+                _failedFilePaths.join(',\n\t'));
         progress.localPercent = (_numPresetsLoaded / _duePresets);
         progress.globalPercent = 1;
         _broadcastReport(progress);
@@ -168,8 +177,8 @@ public class SoundLoader extends EventDispatcher {
 
     /**
      * Executed when one, individual preset is successfully resolved to a ByteArray (and that is successfully cached).
-     * Compiles and broadcasts a specific status report, which includes a global percent value (which could be used to
-     * display a primary progress bar to the end-user).
+     * Compiles and broadcasts a specific status report, which includes a global percent value (which could be used,
+     * e.g., to display a primary progress bar to the end-user).
      */
     private function _reportPresetDone():void {
         var progress:ProgressReport = new ProgressReport;
@@ -185,8 +194,8 @@ public class SoundLoader extends EventDispatcher {
 
     /**
      * Executed while an individual sound file is being loaded from disk. Compiles and broadcasts a specific status
-     * report, which includes a local percent value (which could be used to display a secondary progress bar to the
-     * end-user).
+     * report, which includes a local percent value (which could be used, e.g., to display a secondary progress bar to
+     * the end-user).
      *
      * @param   percentLoaded
      *          The local percent to report.
@@ -239,7 +248,7 @@ public class SoundLoader extends EventDispatcher {
     }
 
     /**
-     * Event listener to respond to an `Event.COMPLETE` event.
+     * Event listener to respond to a FileStream `Event.COMPLETE` event.
      * @param event
      */
     private function _onFileLoaded(event:Event):void {
@@ -255,7 +264,7 @@ public class SoundLoader extends EventDispatcher {
     }
 
     /**
-     * Event listener to respond to an `IOErrorEvent.IO_ERROR` event.
+     * Event listener to respond to a FileStream `IOErrorEvent.IO_ERROR` event.
      * @param event
      */
     private function _onFileIoError(event:IOErrorEvent):void {
@@ -266,7 +275,7 @@ public class SoundLoader extends EventDispatcher {
     }
 
     /**
-     * Event listener to respond to an `ProgressEvent.PROGRESS` event.
+     * Event listener to respond to a FileStream `ProgressEvent.PROGRESS` event.
      * @param event
      */
     private function _onFileProgress(event:ProgressEvent):void {
@@ -295,7 +304,7 @@ public class SoundLoader extends EventDispatcher {
                     .resolvePath(_presetNumber + _soundFilesExtension);
             _soundFontsPath = soundFontsFile.nativePath;
 
-            // Skip presets with missing *.sf2 files.
+            // Skip presets with missing sound files.
             if (!soundFontsFile.exists) {
                 _soundsCache[_presetNumber] = null;
                 _numPresetsToLoad -= 1;

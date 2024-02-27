@@ -3,8 +3,8 @@ import flash.events.IEventDispatcher;
 import flash.utils.ByteArray;
 
 /**
- * Defines the contract for a SynthProxy, which handles converting an organized sound map into audio data,
- * ready to be fed into a sound interface, and manages playback.
+ * Defines the contract for a "SynthProxy", a class that handles converting an organized sound map into audio
+ * data ready to be fed into a sound interface. Also manages playback.
  */
 public interface ISynthProxy extends IEventDispatcher {
 

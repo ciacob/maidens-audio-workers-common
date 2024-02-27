@@ -1,4 +1,8 @@
-package eu.claudius.iacob.synth.utils {
+package eu.claudius.iacob.synth.constants {
+
+/**
+ * Holds constants used to communicate with parallel audio workers.
+ */
 public class WorkersCommon {
     public function WorkersCommon() {
     }
