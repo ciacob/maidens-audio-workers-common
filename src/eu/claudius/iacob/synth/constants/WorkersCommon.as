@@ -33,7 +33,7 @@ public class WorkersCommon {
     public static const COMMAND_EXECUTION_ERROR:String = '$commandExecutionError';
     public static const ERROR_BAD_WORKER_SETUP:String = 'badWorkerSetup';
     public static const EXECUTION_ERROR_ID:String = '$executionErrorId';
-    public static const EXECUTION_ERROR_MESSAGE:String = '$executionErrorMessage';
+    public static const EXECUTION_AUDIT_MESSAGE:String = '$executionErrorMessage';
 
     public static const SOUNDS_ASSIGNMENT_MAP:String = '$soundsAssignmentMap';
     public static const SOUND_BYTES:String = '$soundBytes';

@@ -291,7 +291,7 @@ public class AudioParallelRenderer {
             } else {
                 report[WorkersCommon.REPORT_NAME] = WorkersCommon.COMMAND_EXECUTION_ERROR;
                 report[WorkersCommon.COMMAND_NAME] = WorkersCommon.COMMAND_START_WORKER;
-                report[WorkersCommon.EXECUTION_ERROR_MESSAGE] = Strings.sprintf(BAD_WORKER_STATE, workerState,
+                report[WorkersCommon.EXECUTION_AUDIT_MESSAGE] = Strings.sprintf(BAD_WORKER_STATE, workerState,
                         WorkerState.RUNNING);
                 callBack(report);
             }
@@ -317,7 +317,7 @@ public class AudioParallelRenderer {
         } catch (workerInitError:Error) {
             report[WorkersCommon.REPORT_NAME] = WorkersCommon.COMMAND_EXECUTION_ERROR;
             report[WorkersCommon.COMMAND_NAME] = WorkersCommon.COMMAND_START_WORKER;
-            report[WorkersCommon.EXECUTION_ERROR_MESSAGE] = workerInitError.message;
+            report[WorkersCommon.EXECUTION_AUDIT_MESSAGE] = workerInitError.message;
             report[WorkersCommon.EXECUTION_ERROR_ID] = workerInitError.errorID;
             callBack(report);
         }
