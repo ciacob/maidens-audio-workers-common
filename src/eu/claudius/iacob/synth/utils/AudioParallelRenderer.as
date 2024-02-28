@@ -1,4 +1,5 @@
 package eu.claudius.iacob.synth.utils {
+
 import eu.claudius.iacob.synth.constants.WorkersCommon;
 
 import flash.events.Event;
@@ -21,6 +22,7 @@ public class AudioParallelRenderer {
     private static const SWF_SIGNATURE_SIZE:uint = 3;
     private static const CWS_SWF_SIGNATURE:String = 'CWS';
     private static const FWS_SWF_SIGNATURE:String = 'FWS';
+    private static const ZWS_SWF_SIGNATURE:String = 'ZWS';
 
     // Intrinsic properties
     private var _asyncChain:Vector.<Function>;
@@ -450,7 +452,6 @@ public class AudioParallelRenderer {
             // Callback to pass to all async function in the chain. If any of the chained functions errors, this
             // will break the chain execution (and overall failure will be reported).
             var callbackFunc:Function = function (response:Object):void {
-
                 if (_indicatesFailure(response)) {
                     _errorDetail = response;
                     _onErrorCallback(_$renderer_);
@@ -497,7 +498,7 @@ public class AudioParallelRenderer {
         }
         sourceBytes.position = 0;
         var signature:String = Strings.trim(sourceBytes.readUTFBytes(SWF_SIGNATURE_SIZE) as String);
-        if (!Strings.isAny(signature, CWS_SWF_SIGNATURE, FWS_SWF_SIGNATURE)) {
+        if (!Strings.isAny(signature, CWS_SWF_SIGNATURE, FWS_SWF_SIGNATURE, ZWS_SWF_SIGNATURE)) {
             return new Error(MISSING_SWF_SIGNATURE);
         }
         return null;

@@ -1,4 +1,5 @@
 package eu.claudius.iacob.synth.utils {
+
 import eu.claudius.iacob.synth.constants.OperationTypes;
 import eu.claudius.iacob.synth.constants.PayloadKeys;
 import eu.claudius.iacob.synth.constants.SynthCommon;
@@ -12,7 +13,6 @@ import flash.utils.ByteArray;
 
 import ro.ciacob.utils.Strings;
 import ro.ciacob.utils.constants.CommonStrings;
-
 
 /**
  * Helper class that operates the given ISynthProxy instance the way that it "streams" the audio rendering process.
@@ -539,7 +539,9 @@ public class StreamingUtils extends EventDispatcher {
         // Schedule the next rendering session.
         _renderFrom = _renderTo;
         _renderTo += _bufferSize;
-        _streamNextChunk();
+        if (_streamingInProgress) {
+            _streamNextChunk();
+        }
     }
 
     /**
@@ -548,10 +550,11 @@ public class StreamingUtils extends EventDispatcher {
      */
     private function _onParallelRendererError(renderer:AudioParallelRenderer):void {
         _streamingInProgress = false;
+        var errorDetail : String = _dumpObject(renderer.errorDetail);
         var report:ProgressReport = new ProgressReport(
                 ProgressReport.STATE_CANNOT_STREAM,
                 ProgressReport.SUBSTATE_ERROR,
-                _dumpObject(renderer.errorDetail)
+                errorDetail
         );
         _dispatcher.dispatchEvent(new SystemStatusEvent(report));
     }
@@ -872,7 +875,7 @@ public class StreamingUtils extends EventDispatcher {
             value = ('' + obj[key]);
             out.push(key + CommonStrings.COLON_SPACE + value);
         }
-        return (CommonStrings.NEW_LINE + CommonStrings.TAB + out.join(CommonStrings.NEW_LINE + CommonStrings.TAB));
+        return (out.join(CommonStrings.BROKEN_VERTICAL_BAR));
     }
 }
 }
