@@ -47,7 +47,7 @@ public class AudioParallelRenderer {
     private var _renderedAudioStorage:ByteArray;
     private var _onDoneCallback:Function;
     private var _onErrorCallback:Function;
-    private var _uid : String;
+    private var _uid:String;
 
     /**
      * End-point to instantiate an audio background worker and operate it (e.g., assign work to it, order it
@@ -86,7 +86,7 @@ public class AudioParallelRenderer {
      * This function returns a unique string identifier for this renderer, which is beneficial in contexts where
      * multiple renderers are managed.
      */
-    public function get uid () : String {
+    public function get uid():String {
         return _uid;
     }
 
@@ -121,7 +121,7 @@ public class AudioParallelRenderer {
     /**
      * Convenience method to retrieve the last (slice of) organized audio map/MIDI that was sent for rendering.
      */
-    public function get tracks ():Array {
+    public function get tracks():Array {
         return _tracksValue;
     }
 
@@ -192,80 +192,81 @@ public class AudioParallelRenderer {
      * state, and any attempt to use it will result in an exception.
      */
     public function decommission():void {
+        _canOperate = false;
 
-        // Exit if no concurrency available.
-        if (!_canOperate) {
-            _onErrorCallback(_$renderer_);
-            return;
-        }
+        // If we have a functional worker, terminate it.
+        if (_worker) {
 
-        if (_worker && _worker.state == WorkerState.RUNNING) {
+            // If we can communicate with the worker, we ask it to termintate iself.
+            if (_worker.state == WorkerState.RUNNING) {
+                function terminateWorker(event:Event):void {
+                    _workerChannel.removeEventListener(Event.CHANNEL_MESSAGE, terminateWorker);
 
-            /**
-             * Executed when the internal listener of the worker being decommissioned was removed. Continues
-             * the process by removing the external listener, releasing all worker-specific shared properties,
-             * terminating the worker, and setting it for garbage collection.
-             * @param event
-             */
-            function terminateWorker(event:Event):void {
-                _workerChannel.removeEventListener(Event.CHANNEL_MESSAGE, terminateWorker);
+                    // Releases the worker-specific shared properties
+                    var $set:Function = _worker.setSharedProperty;
+                    $set(WorkersCommon.IN_CHANNEL_PREFIX + _workerUid, null);
+                    $set(WorkersCommon.OUT_CHANNEL_PREFIX + _workerUid, null);
+                    $set(WorkersCommon.INPUT_TRACKS + _workerUid, null);
+                    $set(WorkersCommon.OUTPUT_BYTES + _workerUid, null);
+                    $set(WorkersCommon.SESSION_ID + _workerUid, null);
+                    _soundsMapStorage.position = 0;
+                    var sharedSoundsMap:Object = (_soundsMapStorage.readObject() as Object);
+                    var soundKey:String;
+                    var soundBytesUid:String;
+                    for (soundKey in sharedSoundsMap) {
+                        soundBytesUid = (sharedSoundsMap[soundKey] as String);
+                        $set(soundBytesUid, null);
+                    }
+                    $set(WorkersCommon.SOUNDS_ASSIGNMENT_MAP + _workerUid, null);
 
-                // Releases the worker-specific shared properties
-                var $set:Function = _worker.setSharedProperty;
-                $set(WorkersCommon.IN_CHANNEL_PREFIX + _workerUid, null);
-                $set(WorkersCommon.OUT_CHANNEL_PREFIX + _workerUid, null);
-                $set(WorkersCommon.INPUT_TRACKS + _workerUid, null);
-                $set(WorkersCommon.OUTPUT_BYTES + _workerUid, null);
-                $set(WorkersCommon.SESSION_ID + _workerUid, null);
-                _soundsMapStorage.position = 0;
-                var sharedSoundsMap:Object = (_soundsMapStorage.readObject() as Object);
-                var soundKey:String;
-                var soundBytesUid:String;
-                for (soundKey in sharedSoundsMap) {
-                    soundBytesUid = (sharedSoundsMap[soundKey] as String);
-                    $set(soundBytesUid, null);
+                    // Terminates the worker.
+                    _worker.terminate();
                 }
-                $set(WorkersCommon.SOUNDS_ASSIGNMENT_MAP + _workerUid, null);
 
-                // Terminates the worker.
+                // Removes the event listener from INSIDE the worker (the one that listens to
+                // "inbound" messages, from a worker perspective). After doing this, the worker is
+                // left "deaf", i.e., unable to respond to any future requests from outside, but this
+                // is fine, since we are going to terminate it anyway.
+                _workerChannel.addEventListener(Event.CHANNEL_MESSAGE, terminateWorker);
+                var command:Object = {};
+                command[WorkersCommon.COMMAND_NAME] = WorkersCommon.COMMAND_RELEASE_LISTENER;
+                _mainChannel.send(command);
+            } else {
+
+                // Otherwise, we forcingly terminate it.
                 _worker.terminate();
-
-                // Releases all pointers to the worker instance and related data, so that it can be garbage
-                // collected.
-                _canOperate = false;
-                _asyncChain = null;
-                _errorDetail = null;
-                _$renderer_ = null;
-                _workerSrc = null;
-                _main = null;
-                _mainDomain = null;
-                _worker = null;
-                _workerUid = null;
-                _mainChannel = null;
-                _workerChannel = null;
-                _tracksStorage = null;
-                _tracksValue = null;
-                _sessionValue = null;
-                _sessionStorage = null;
-                _soundsMapValue = null;
-                _soundsMapStorage = null;
-                _renderedAudioStorage = null;
-                _onDoneCallback(_$renderer_);
-                _onDoneCallback = null;
-                _onErrorCallback = null;
             }
-
-            // Removes the event listener from INSIDE the worker (the one that listens to "inbound" messages,
-            // from a worker perspective). After doing this, the worker is left "deaf", i.e., unable to
-            // respond to any future requests from outside.
-            _workerChannel.addEventListener(Event.CHANNEL_MESSAGE, terminateWorker);
-            var command:Object = {};
-            command[WorkersCommon.COMMAND_NAME] = WorkersCommon.COMMAND_RELEASE_LISTENER;
-            _mainChannel.send(command);
-        } else {
-            _errorDetail = WorkersCommon.REASON_WORKER_NOT_RUNNING;
-            _onErrorCallback(_$renderer_);
         }
+
+        // Releases any other pointers that could possibly hold memory.
+        _asyncChain.length = 0;
+        _asyncChain = null;
+        _errorDetail = null;
+        _$renderer_ = null;
+        _workerSrc.clear();
+        _workerSrc = null;
+        _main = null;
+        _mainDomain = null;
+        _worker = null;
+        _workerUid = null;
+        _mainChannel = null;
+        _workerChannel = null;
+        _tracksStorage.clear();
+        _tracksStorage = null;
+        _tracksValue.length = 0;
+        _tracksValue = null;
+        _sessionValue = null;
+        _sessionStorage.clear();
+        _sessionStorage = null;
+        _soundsMapValue = null;
+        _soundsMapStorage.clear();
+        _soundsMapStorage = null;
+        _onDoneCallback = null;
+        _onErrorCallback = null;
+
+        // We DON'T empty out the "_renderedAudioStorage", as this is a shared, external resource, and others could/
+        // might still need it.
+        _renderedAudioStorage = null;
     }
 
     /**

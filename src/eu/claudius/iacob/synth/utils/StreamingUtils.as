@@ -317,6 +317,33 @@ public class StreamingUtils extends EventDispatcher {
     }
 
     /**
+     * Prepares this class to be garbage collected. Note that after calling this method, the class is
+     * left in an unusable state. Note that this method DOES NOT, on purpose, empty the
+     * "_renderedAudioStorage" ByteArray, the idea being that it could still be externally used,
+     * directly, via a reference to the ISynthProxy implementor in charge of it.
+     */
+    public function decommission () : void {
+        if (_proxy) {
+            _proxy.stopStreamedPlayback();
+            _proxy.stopPrerenderedPlayback();
+            _proxy.removeEventListener (PlaybackPositionEvent.PLAYBACK_POSITION_EVENT,
+                    _onPLayBackPositionChanged);
+            _proxy = null;
+        }
+        _workerBytes.clear();
+        _workerBytes = null;
+        if (_parallelRenderer) {
+            _parallelRenderer.decommission();
+            _parallelRenderer = null;
+        }
+        _tracks.length = 0;
+        _tracks = null;
+        _speedMeasurements.length = 0;
+        _speedMeasurements = null;
+        _renderedAudioStorage = null;
+    }
+
+    /**
      * Convenience internal getter that returns the `_privateClient` instance when given, or the current StreamingUtils
      * instance otherwise; used to decide where exactly the SystemStatus events are to be dispatched (the idea being
      * that, when a `_privateClient` instance is in effect, all event to be only dispatched there).

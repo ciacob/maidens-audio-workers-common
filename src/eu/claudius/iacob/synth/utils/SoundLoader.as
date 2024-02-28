@@ -110,6 +110,18 @@ public class SoundLoader extends EventDispatcher {
     }
 
     /**
+     * Destroys the internal cache in order to free up memory. The cache will be rebuilt on the next
+     * call of `preloadSounds()`.
+     */
+    public function destroyCache() : void {
+        for (var key : String in _soundsCache) {
+            var storage : ByteArray = (_soundsCache[key] as ByteArray);
+            storage.clear();
+            delete _soundsCache[key];
+        }
+    }
+
+    /**
      * Sets internal flags back to their initial value, so that loading a new set of preset descriptors becomes
      * possible.
      */
