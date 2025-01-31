@@ -21,3 +21,6 @@ src/eu/claudius/iacob/.DS_Store
 
 /.vscode
 /asconfig.json
+
+.vscode/
+asconfig.json
