@@ -200,6 +200,10 @@ public class AudioParallelRenderer {
             // If we can communicate with the worker, we ask it to termintate iself.
             if (_worker.state == WorkerState.RUNNING) {
                 function terminateWorker(event:Event):void {
+                    if (!_workerChannel || !_worker) {
+                        return;
+                    }
+                    
                     _workerChannel.removeEventListener(Event.CHANNEL_MESSAGE, terminateWorker);
 
                     // Releases the worker-specific shared properties
@@ -227,7 +231,9 @@ public class AudioParallelRenderer {
                 // "inbound" messages, from a worker perspective). After doing this, the worker is
                 // left "deaf", i.e., unable to respond to any future requests from outside, but this
                 // is fine, since we are going to terminate it anyway.
-                _workerChannel.addEventListener(Event.CHANNEL_MESSAGE, terminateWorker);
+                if (_workerChannel) {
+                    _workerChannel.addEventListener(Event.CHANNEL_MESSAGE, terminateWorker);
+                }
                 var command:Object = {};
                 command[WorkersCommon.COMMAND_NAME] = WorkersCommon.COMMAND_RELEASE_LISTENER;
                 _mainChannel.send(command);
