@@ -186,7 +186,7 @@ public class FileUtils extends EventDispatcher {
 
     /**
      * Executed when OutputProgressEvents are fired from the FileStream instance responsible for writing the generated
-     * WAV file to disk. Redispatches progress information via our standardized SystemStatusEvent mechanism, and
+     * WAV file to disk. Re-dispatches progress information via our standardized SystemStatusEvent mechanism, and
      * closes the stream when there are no bytes left to be written.
      * @param   event
      */
@@ -212,7 +212,7 @@ public class FileUtils extends EventDispatcher {
 
     /**
      * Executed when an IOErrorEvent is fired from the FileStream instance responsible for writing the generated
-     * WAV file to disk. Redispatches information via our standardized SystemStatusEvent mechanism, and closes the
+     * WAV file to disk. Re-dispatches information via our standardized SystemStatusEvent mechanism, and closes the
      * stream.
      * @param   event
      */
@@ -224,7 +224,7 @@ public class FileUtils extends EventDispatcher {
         var report : ProgressReport = new ProgressReport(
                 ProgressReport.STATE_CANNOT_SAVE,
                 ProgressReport.SUBSTATE_ERROR,
-                _fileBeingSaved.nativePath,
+                (_fileBeingSaved? _fileBeingSaved.nativePath : ''),
                 errorMessage
         );
         dispatchEvent(new SystemStatusEvent(report));
